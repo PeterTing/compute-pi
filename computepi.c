@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <immintrin.h>
+#include <math.h>
 #include <omp.h>
 #include "computepi.h"
+
+#define SAMPLE_SIZE 10
 
 double compute_pi_baseline(size_t N)
 {
@@ -115,5 +118,16 @@ double compute_pi_avx_unroll(size_t N)
           tmp2[0] + tmp2[1] + tmp2[2] + tmp2[3] +
           tmp3[0] + tmp3[1] + tmp3[2] + tmp3[3] +
           tmp4[0] + tmp4[1] + tmp4[2] + tmp4[3];
+    return pi * 4.0;
+}
+
+double compute_pi_leibniz(size_t N)
+{
+    double pi = 0.0;
+    for(size_t i = 0; i < N; i++) {
+        int sign = i % 2 == 0 ? 1 : -1;
+        pi +=  (sign / (2.0 * (double) i + 1.0));
+    }
+
     return pi * 4.0;
 }
