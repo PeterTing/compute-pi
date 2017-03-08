@@ -1,56 +1,59 @@
 CC = gcc
-     CFLAGS = -O0 -std=gnu99 -Wall -fopenmp -mavx
-                       EXECUTABLE = \
-                                    time_test_baseline time_test_openmp_2 time_test_openmp_4 \
-                                    time_test_avx time_test_avxunroll time_test_leibniz \
-                                    benchmark_clock_gettime
+CFLAGS = -O0 -std=gnu99 -Wall -fopenmp -mavx
+EXECUTABLE = \
+	time_test_baseline time_test_openmp_2 time_test_openmp_4 \
+	time_test_avx time_test_avxunroll \
+	benchmark_clock_gettime
 
-                                    GIT_HOOKS :
-                                    = .git/hooks/pre-commit
+GIT_HOOKS := .git/hooks/pre-commit
 
-                                      $(GIT_HOOKS):
-                                          @scripts/install-git-hooks
-                                          @echo
+$(GIT_HOOKS):
+	@scripts/install-git-hooks
+	@echo
 
-                                      default:
-    $(GIT_HOOKS) computepi.o
-    $(CC) $(CFLAGS) computepi.o time_test.c -DBASELINE -o time_test_baseline
-    $(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_2 -o time_test_openmp_2
-    $(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_4 -o time_test_openmp_4
-    $(CC) $(CFLAGS) computepi.o time_test.c -DAVX -o time_test_avx
-    $(CC) $(CFLAGS) computepi.o time_test.c -DAVXUNROLL -o time_test_avxunroll
-    $(CC) $(CFLAGS) computepi.o time_test.c -LEIBNIZ -o time_test_leibniz
-    $(CC) $(CFLAGS) computepi.o benchmark_clock_gettime.c -o benchmark_clock_gettime
+default: $(GIT_HOOKS) computepi.o
+	$(CC) $(CFLAGS) computepi.o time_test.c -DBASELINE -o time_test_baseline
+	$(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_2 -o time_test_openmp_2
+	$(CC) $(CFLAGS) computepi.o time_test.c -DOPENMP_4 -o time_test_openmp_4
+	$(CC) $(CFLAGS) computepi.o time_test.c -DAVX -o time_test_avx
+	$(CC) $(CFLAGS) computepi.o time_test.c -DAVXUNROLL -o time_test_avxunroll
+	$(CC) $(CFLAGS) computepi.o benchmark_clock_gettime.c -o benchmark_clock_gettime
 
-.PHONY:
-clean default
+leibniz: $(GIT_HOOKS) LeibnizPi.o
+	$(CC) $(CFLAGS) LeibnizPi.o time_test.c -DLEIBNIZ -DBASELINE -o time_test_baseline
+	$(CC) $(CFLAGS) LeibnizPi.o time_test.c -DLEIBNIZ -DOPENMP_2 -fopenmp -o time_test_openmp_2
+	$(CC) $(CFLAGS) LeibnizPi.o time_test.c -DLEIBNIZ -DOPENMP_4 -fopenmp -o time_test_openmp_4
+	$(CC) $(CFLAGS) LeibnizPi.o time_test.c -DLEIBNIZ -DAVX -o time_test_avx
+	$(CC) $(CFLAGS) LeibnizPi.o time_test.c -DLEIBNIZ -DAVXUNROLL -o time_test_avxunroll
+	$(CC) $(CFLAGS) LeibnizPi.o -DLEIBNIZ benchmark_clock_gettime.c -o benchmark_clock_gettime
 
-        %.o:
-    %.c
-    $(CC) -c $(CFLAGS) $< -o $@
 
-check:
-default
-        time ./time_test_baseline
-        time ./time_test_openmp_2
-        time ./time_test_openmp_4
-        time ./time_test_avx
-        time ./time_test_avxunroll
-        time ./time_test_leibniz
+.PHONY: clean default leibniz
 
-        gencsv:
-default
-        for i in `seq 100 5000 250000`;
-do \
-    printf "%d," $$i;
-\
-./benchmark_clock_gettime $$i;
-\
-done > result_clock_gettime.csv
+%.o: %.c
+	$(CC) -c $(CFLAGS) $< -o $@ 
 
-plot:
-gencsv
-gnuplot scripts/runtime.gp
+check: default
+	time ./time_test_baseline
+	time ./time_test_openmp_2
+	time ./time_test_openmp_4
+	time ./time_test_avx
+	time ./time_test_avxunroll
+
+checkleibniz: leibniz
+	time ./time_test_baseline
+	time ./time_test_openmp_2
+	time ./time_test_openmp_4
+	time ./time_test_avx
+	time ./time_test_avxunroll
+
+
+gencsv: default
+	for i in `seq 100 100 100000`; do \
+		printf "%d," $$i;\
+		./benchmark_clock_gettime $$i; \
+	done > result_clock_gettime.csv	
 
 clean:
-rm -f $(EXECUTABLE) *.o *.s result_clock_gettime.csv runtime.png
+	rm -f $(EXECUTABLE) *.o *.s result_clock_gettime.csv
+
