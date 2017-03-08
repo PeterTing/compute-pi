@@ -1,7 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#ifndef LEIBNIZ
 #include "computepi.h"
+#else
+#include "LeibnizPi.h"
+#endif
 
 #define CLOCK_ID CLOCK_MONOTONIC_RAW
 #define ONE_SEC 1000000000.0
@@ -19,7 +24,11 @@ int main(int argc, char const *argv[])
     // Baseline
     clock_gettime(CLOCK_ID, &start);
     for (i = 0; i < loop; i++) {
+#if defined(LEIBNIZ)
+        leibniz_pi_baseline(N);
+#else
         compute_pi_baseline(N);
+#endif
     }
     clock_gettime(CLOCK_ID, &end);
     printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
@@ -28,7 +37,11 @@ int main(int argc, char const *argv[])
     // OpenMP with 2 threads
     clock_gettime(CLOCK_ID, &start);
     for (i = 0; i < loop; i++) {
+#if defined(LEIBNIZ)
+        leibniz_pi_openmp(N, 2);
+#else
         compute_pi_openmp(N, 2);
+#endif
     }
     clock_gettime(CLOCK_ID, &end);
     printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
@@ -37,7 +50,11 @@ int main(int argc, char const *argv[])
     // OpenMP with 4 threads
     clock_gettime(CLOCK_ID, &start);
     for (i = 0; i < loop; i++) {
+#if defined(LEIBNIZ)
+        leibniz_pi_openmp(N, 4);
+#else
         compute_pi_openmp(N, 4);
+#endif
     }
     clock_gettime(CLOCK_ID, &end);
     printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
@@ -46,7 +63,11 @@ int main(int argc, char const *argv[])
     // AVX SIMD
     clock_gettime(CLOCK_ID, &start);
     for (i = 0; i < loop; i++) {
+#if defined(LEIBNIZ)
+        leibniz_pi_avx(N);
+#else
         compute_pi_avx(N);
+#endif
     }
     clock_gettime(CLOCK_ID, &end);
     printf("%lf,", (double) (end.tv_sec - start.tv_sec) +
@@ -55,7 +76,11 @@ int main(int argc, char const *argv[])
     // AVX SIMD + Loop unrolling
     clock_gettime(CLOCK_ID, &start);
     for (i = 0; i < loop; i++) {
+#if defined(LEIBNIZ)
+        leibniz_pi_avx_unroll(N);
+#else
         compute_pi_avx_unroll(N);
+#endif
     }
     clock_gettime(CLOCK_ID, &end);
     printf("%lf\n", (double) (end.tv_sec - start.tv_sec) +
